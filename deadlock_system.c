@@ -255,6 +255,17 @@ void decayPressure() {
         resource_pressure[j] = (resource_pressure[j] * 3) / 4; 
     }
 }
+void printStatus(int cycle, double aiProb, int deadlockDetected) {
+    printf("\n=== Status Summary (Cycle %d) ===\n", cycle);
+    printf("[AI] Predicted Deadlock Probability: %.3f\n", aiProb);
+
+    if (deadlockDetected)
+        printf("[OS] Deadlock Detected!\n");
+    else
+        printf("[OS] System is in Safe State.\n");
+}
+
+
 
 int main_loop_iterations = 30;
 
@@ -285,6 +296,10 @@ int main(int argc, char *argv[]) {
         } else {
             printf("[OS] System is in safe state (no deadlock detected).\n");
         }
+        printStatus(cycle_count, prob, deadlock);
+
+       
+
 
         if (deadlock) {
             int preempted = preemptResource();
