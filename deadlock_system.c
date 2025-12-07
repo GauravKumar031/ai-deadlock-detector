@@ -211,56 +211,79 @@ void delayRequests() {
 }
 
 
+
+
+
 void generateRandomRequestsAndApply(int maxRequestsPerCycle) {
     int requestsThisCycle = (rand() % maxRequestsPerCycle) + 1;
-    for(int r=0;r<requestsThisCycle;r++){
-        int pid = rand() % n;
-        int reqVec[MAX_RESOURCES];
+
+    printf("\n[SIM] Generating %d random requests this cycle...\n", requestsThisCycle);
+
+    for (int r = 0; r < requestsThisCycle; r++) {
+
+        int pid = rand() % n;  
+
+        int reqVec[MAX_RESOURCES] = {0};
         int madeRequest = 0;
-        for(int j=0;j<m;j++){
-            int bound = need[pid][j] + 1; 
-            int val = 0;
-            if (bound > 0) {
-                val = rand() % (bound + 1); 
-            } else {
-                val = 0;
-            }
-            if ((rand() % 100) < 5) val += (rand() % 2); 
+
+        for (int j = 0; j < m; j++) {
+            int bound = need[pid][j];
+            int val = (bound > 0) ? rand() % (bound + 1) : 0;
+
+            if ((rand() % 100) < 5) val++;
+
             reqVec[j] = val;
             if (val > 0) madeRequest = 1;
         }
 
-        if (!madeRequest) continue;
+        if (!madeRequest) {
+            printf("[SIM] P%d made no request.\n", pid);
+            continue;
+        }
 
-        for(int j=0;j<m;j++){
+        printf("[SIM] P%d requests: [ ", pid);
+        for (int j = 0; j < m; j++) printf("%d ", reqVec[j]);
+        printf("]\n");
+
+        for (int j = 0; j < m; j++) {
             last_request[pid][j] = reqVec[j];
             resource_pressure[j] += reqVec[j];
         }
         request_count[pid]++;
 
-       
         int canGrantDirect = 1;
-        for(int j=0;j<m;j++){
-            if (reqVec[j] > available[j]) { canGrantDirect = 0; break; }
+        for (int j = 0; j < m; j++) {
+            if (reqVec[j] > available[j]) {
+                canGrantDirect = 0;
+                break;
+            }
         }
+
         if (!canGrantDirect) {
-            
+            printf("[SIM] Request denied (insufficient available resources)\n");
             continue;
+        }
+
+       
+        for (int j = 0; j < m; j++) {
+            available[j] -= reqVec[j];
+            allocation[pid][j] += reqVec[j];
+        }
+        calculateNeed();
+
+        int safeSeq[MAX_PROCESSES];
+        int safe = isSafeState(safeSeq);
+
+        if (!safe) {
+            for (int j = 0; j < m; j++) {
+                available[j] += reqVec[j];
+                allocation[pid][j] -= reqVec[j];
+            }
+            calculateNeed();
+
+            printf("[SIM] Request rolled back (unsafe → would lead to deadlock)\n");
         } else {
-            for(int j=0;j<m;j++){
-                available[j] -= reqVec[j];
-                allocation[pid][j] += reqVec[j];
-                need[pid][j] = maximum[pid][j] - allocation[pid][j];
-            }
-            int safeSeq[MAX_PROCESSES];
-            if (!isSafeState(safeSeq)) {
-                for(int j=0;j<m;j++){
-                    available[j] += reqVec[j];
-                    allocation[pid][j] -= reqVec[j];
-                    need[pid][j] = maximum[pid][j] - allocation[pid][j];
-                }
-            } else {
-            }
+            printf("[SIM] Request granted safely.\n");
         }
     }
 }
