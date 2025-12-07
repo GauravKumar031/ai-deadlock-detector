@@ -112,13 +112,28 @@ int isSafeState(int safeSeq[]) {
     }
     return (count == n);
 }
+void printSafeSequence(int safeSeq[], int length) {
+    printf("[DETECTION] Safe sequence: ");
+    for (int i = 0; i < length; i++) {
+        printf("P%d ", safeSeq[i]);
+    }
+    printf("\n");
+}
+
 
 int detectDeadlock() {
     int safeSeq[MAX_PROCESSES];
     int safe = isSafeState(safeSeq);
-    if (!safe) return 1;
-    return 0;
+
+    if (safe) {
+        printSafeSequence(safeSeq, n);
+        return 0;  
+    } else {
+        printf("[DETECTION] No safe sequence found -> System is in DEADLOCK.\n");
+        return 1;  
+    }
 }
+
 
 
 double aiPredictDeadlockProb() {
